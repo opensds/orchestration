@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#this is my first code
+
 import sys
 from flask import Flask
 from orchestration.api.services import service
@@ -25,7 +27,6 @@ class ServerManager:
 
     def __init__(self):
         self._init_server()
-
     def _init_server(self):
         self.app.url_map.strict_slashes = False
 
