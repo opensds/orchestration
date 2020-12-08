@@ -46,32 +46,15 @@ The recommended OpenSDS Local Cluster Installation may be followed for initial t
 	# st2ctl status
     ##### st2 components status #####
     st2actionrunner PID: 96
-    st2actionrunner PID: 102
-    st2actionrunner PID: 110
-    st2actionrunner PID: 115
-    st2api PID: 58
-    st2api PID: 268
-    st2stream PID: 61
-    st2stream PID: 261
-    st2auth PID: 47
-    st2auth PID: 249
-    st2garbagecollector PID: 45
-    st2notifier PID: 51
-    st2resultstracker PID: 49
-    st2rulesengine PID: 56
-    st2sensorcontainer PID: 42
-    st2chatops is not running.
-    st2timersengine PID: 60
-    st2workflowengine PID: 52
-    st2scheduler PID: 54
+    ...
     mistral-server PID: 340
     mistral.api PID: 335
 	```
-* Run [OpenSDS Orchestration](https://github.com/opensds/orchestration) the Orchestration manager. (StackStorm End-point and Password are required for Orchestration Manager)
+* Update [orchestration.conf](https://github.com/opensds/orchestration/blob/master/scripts/install.sh) file and Run [OpenSDS Orchestration](https://github.com/opensds/orchestration) Orchestration manager. (config file section 'workflow' needs to be updated for 'host' and 'password' of Stackstorm)
     ```sh
     $ cd <OpenSDS Orchestration Directory>
-    $ ./orchestration/connectionmanager/credcreator.py set "St2" "<ST2 Endpoint IP>" "st2admin" "<ST2 Password>"
-    $ ./orchestration/server.py
+    $ python setup.py install
+    $ ./orchestration/server.py <orchestration.conf file path>
     ```
 
 #### Installer script
@@ -86,11 +69,36 @@ And, default paths for st2-docker or opensds pack may be modified as below, if n
 $ ST2_DOCKER_PATH="/opt/opensds/orchestration" ST2_WORKFLOW_PATH="/opt/opensds/orchestration/contrib/st2" ./scripts/install.sh
 ```
 
-* Known issue
-  * Creation of virtual environment for opensds (command: st2 run packs.setup_virtualenv packs=opensds) fails with [Exception: Failed to install requirement "six>=1.9.0,<2.0": Collecting six<2.0,>=1.9.0]. This can be ignored for now.
-  * After cleanup, mistral services may not be running. Restart postgres, and bring up stackstorm containers
+#### Known issue
+* Creation of virtual environment for opensds (command: st2 run packs.setup_virtualenv packs=opensds) fails with [Exception: Failed to install requirement "six>=1.9.0,<2.0": Collecting six<2.0,>=1.9.0]. This can be ignored for now.
+* Sometimes during multiple installations DB gets corrupt and some StackStorms services may not be running  (Eg. mistral-server, mistral.api). Because of this condition orchestration workflows will not run.
+  * To check this, go to StackStorm Installer folder and check st2ctl status as below.
+
     ```sh
-    $docker-compose down && docker-compose up -d postgres && docker-compose up -d
+    $ cd /opt/st2-installer-linux-amd64
+    $ docker-compose exec stackstorm st2ctl status
+    ##### st2 components status #####
+    st2actionrunner PID: 99
+    ...
+    st2scheduler PID: 55
+    mistral-server is not running.     -----------------------------> ERROR condition
+    mistral.api is not running.        -----------------------------> ERROR condition
+    ```
+  * To Fix this issue, run commands below:
+
+    ```sh
+    $ cd /opt/st2-installer-linux-amd64
+    $ docker-compose exec stackstorm st2ctl stop
+    $ docker-compose stop postgres
+    $ docker system prune --volumes
+    $ docker-compose up -d postgres
+    $ docker-compose exec stackstorm st2ctl start
+    ...
+    ##### st2 components status #####
+    st2actionrunner PID: 956
+    ...
+    mistral-server PID: 1400
+    mistral.api PID: 1522
     ```
 
 #### Example usage
