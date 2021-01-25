@@ -145,7 +145,14 @@ def instance_ops(tenant_id=''):
     service_map['user_id'] = user_id
     service_map['tenant_id'] = tenant_id
     service_map['status'] = status_map[ret_json['status']]
-    service_obj = create_service(None, service_map)
+    try:
+        service_obj = create_service(None, service_map)
+    except Exception as ex:
+        err_msg = str(ex)
+        logger.error("received exception in creating service: %s", err_msg)
+        err_ret = {}
+        err_ret['message'] = err_msg
+        return jsonify(err_ret), Apiconstants.HTTP_ERR_BAD_REQUEST
 
     # Now that service is created append appropriate values
     service_map['service_id'] = sd_id

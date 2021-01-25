@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from orchestration.db import Session
 from orchestration.db import models
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import and_
 from orchestration.utils.config import logger
 
@@ -136,10 +137,18 @@ def create_service(context, values):
     for key, value in values.items():
         if hasattr(service, key):
             setattr(service, key, value)
-
-    with session_scope() as session:
-        session.add(service)
-    return get_service(None, values['id'])
+    try:
+        with session_scope() as session:
+            session.add(service)
+        return get_service(None, values['id'])
+    except IntegrityError as ie:
+        session.rollback()
+        err_msg = str(ie)
+        if err_msg.find('services.name'):
+            err_msg = "Instance Name should be unique"
+            raise ValueError(err_msg)
+    except SQLAlchemyError as sqe:
+        raise ValueError(str(sqe))
 
 
 def get_service(context, id):

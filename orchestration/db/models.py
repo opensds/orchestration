@@ -17,7 +17,7 @@ SQLAlchemy models for orchestration.
 import datetime
 import uuid
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy import Column, String, Text, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.inspection import inspect
@@ -103,6 +103,7 @@ class Service(ModelBase):
                                       primaryjoin='Service. \
                                       service_definition_id == \
                                       ServiceDefinition.id')
+    __table_args__ = (UniqueConstraint('name'),)
 
 
 class Workflow(ModelBase):

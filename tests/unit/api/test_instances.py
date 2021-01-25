@@ -14,6 +14,8 @@
 
 import json
 import uuid
+import random
+from datetime import datetime
 from mock import patch, Mock
 from orchestration.connectionmanager.st2 import St2
 
@@ -22,10 +24,16 @@ def test_post_instance(client):
     type_mime = 'application/json'
     header = {'Content-Type': type_mime, 'Accept': type_mime,
               'X-Auth-Token': 'abcde'}
+    # Using random number to generate random string.
+    # Name should be unique and with py27 run, the DB has already a name
+    # column inserted. Now with py3.x run it, will fail as DB has already
+    # the values for name column.
+    random.seed(datetime.now())
+    name = "test" + str(random.randint(1, 101))
     data = {
         "service_id": "26ab0773-fc5a-4211-a8e9-8e61ff16fa42",
         "action": "opensds.migration-bucket",
-        "name": "foo",
+        "name": name,
         "parameters": {
             "ip_addr": "1.2.3.4",
             "port": "8089",
@@ -83,9 +91,11 @@ def test_post_instance_valid(client):
     header = {'Content-Type': type_mime, 'Accept': type_mime,
               'X-Auth-Token': 'abcde'}
     data = {}
+    random.seed(datetime.now())
+    name = "test" + str(random.randint(101, 201))
     data["service_id"] = "26ab0773-fc5a-4211-a8e9-8e61ff16fa42"
     data["action"] = "opensds.migration-bucket"
-    data["name"] = "foo"
+    data["name"] = name
     data["parameters"] = {}
     data["description"] = "Hello"
     data["user_id"] = "abc"
